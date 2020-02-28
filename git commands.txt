@@ -1,0 +1,29 @@
+Delete local branch:
+    git branch -d <branch>
+Delete remote branch:
+    git push origin :<branch>
+Get git commits:
+    git reflog
+Change git name:
+    git config --global user.name "<name>"
+Change git email:
+    git config --global user.email "<email>"
+Show all branchs (including local):
+    git branch -a
+Stage all files:
+    git add --all
+Get all log:
+    git log
+Merge local branches from A to B:
+    git checkout B
+    git merge A
+Checkout status:
+    git status -s
+Get all used commands (since begining of prompt session):
+    history
+Unset Git credentials
+    git config --global --unset credential.helper
+    git config --system --unset credential.helper
+Disable SSL certificate
+    git config http.sslVerify false
+    git -c http.sslVerify=false clone <repo url>
