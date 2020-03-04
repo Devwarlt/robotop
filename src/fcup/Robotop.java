@@ -1,11 +1,11 @@
 package fcup;
 import robocode.*;
-//import java.awt.Color;
+import java.awt.Color;
 
-// API help : https://robocode.sourceforge.io/docs/robocode/robocode/Robot.html
+// API help : http://robocode.sourceforge.net/docs/robocode/robocode/Robot.html
 
 /**
- * Robotop - a robot by Devwarlt and AmandHellen
+ * Robotop - a robot by (your name here)
  */
 public class Robotop extends Robot
 {
@@ -18,8 +18,13 @@ public class Robotop extends Robot
 		// After trying out your robot, try uncommenting the import at the top,
 		// and the next line:
 
-		// setColors(Color.red,Color.blue,Color.green); // body,gun,radar
-
+		// body,gun,radar
+		setBodyColor(Color.black);
+		setGunColor(Color.orange);
+		setRadarColor(Color.green);
+		setBulletColor(Color.yellow);
+		setScanColor(Color.blue);
+		
 		// Robot main loop
 		while(true) {
 			// Replace the next 4 lines with any behavior you would like
@@ -29,13 +34,25 @@ public class Robotop extends Robot
 			turnGunRight(360);
 		}
 	}
+	
 
 	/**
 	 * onScannedRobot: What to do when you see another robot
 	 */
 	public void onScannedRobot(ScannedRobotEvent e) {
 		// Replace the next line with any behavior you would like
-		fire(1);
+		//double angle = e.getBearing(); // retorna o angulo do robo adversario
+		//double distance = e.getDistance(); //retorna a distancia do robo adversario
+		double energyOpponent = e.getEnergy(); // retorna a energia do robo adversario
+		double myEnergy = getEnergy();
+		int opponents = getOthers();
+		
+		if(myEnergy > energyOpponent && myEnergy > 70){
+			fire(3);
+		}else{
+			fire(1);
+		}
+		scan();	//procura por outros robos logo apos atirar
 	}
 
 	/**
@@ -43,7 +60,9 @@ public class Robotop extends Robot
 	 */
 	public void onHitByBullet(HitByBulletEvent e) {
 		// Replace the next line with any behavior you would like
+		turnRight(45);
 		back(10);
+		//scan();
 	}
 	
 	/**
@@ -51,6 +70,30 @@ public class Robotop extends Robot
 	 */
 	public void onHitWall(HitWallEvent e) {
 		// Replace the next line with any behavior you would like
+		//turnRight(45);
 		back(20);
+		double positionBody = getHeading();
+		double positionWall = e.getBearing();
+		if(positionBody == 0 || positionBody == 90 || positionBody == 180 || positionBody == 270){
+			turnGunRight(90);
+			fire(3);
+		}else{
+			turnGunRight(positionWall+90);
+			fire(3);
+		}
 	}	
+	
+	//quando o robo bate com outro robo
+	public void onHitRobot(HitRobotEvent e){
+		back(10);
+		double positionBody = getHeading();
+		double positionOpposite = e.getBearing();
+		if(positionBody == 0 || positionBody == 90 || positionBody == 180 || positionBody == 270){
+			turnGunRight(positionOpposite - 90);
+			fire(3);
+		}else{
+			turnGunRight(positionOpposite);
+			fire(3);
+		}
+	}
 }
