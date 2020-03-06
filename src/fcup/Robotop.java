@@ -1,99 +1,274 @@
 package fcup;
-import robocode.*;
+
 import java.awt.Color;
 
-// API help : http://robocode.sourceforge.net/docs/robocode/robocode/Robot.html
+import robocode.AdvancedRobot;
+import robocode.HitByBulletEvent;
+import robocode.HitRobotEvent;
+import robocode.HitWallEvent;
+import robocode.ScannedRobotEvent;
 
-/**
- * Robotop - a robot by (your name here)
+/*	FCUP - U.Porto
+ * 	Project name: Robotop
+ * 
+ * 	Author(s):
+ * 	- [ID: 201911476] - Amanda Hellen Pereira Delgado
+ * 	- [ID: 201911449] - Nádio Dib Fernandes Pontes
+ * 
+ * 	Professor: José Paulo Leal
+ * 	Class: Software Architecture
  */
-public class Robotop extends Robot
-{
-	/**
-	 * run: Robotop's default behavior
-	 */
+public class FcupBot extends AdvancedRobot {
+	@Override
 	public void run() {
-		// Initialization of the robot should be put here
-
-		// After trying out your robot, try uncommenting the import at the top,
-		// and the next line:
-
-		// body,gun,radar
 		setBodyColor(Color.black);
 		setGunColor(Color.orange);
 		setRadarColor(Color.green);
 		setBulletColor(Color.yellow);
 		setScanColor(Color.blue);
-		
-		// Robot main loop
-		while(true) {
-			// Replace the next 4 lines with any behavior you would like
-			ahead(100);
-			turnGunRight(360);
-			back(100);
-			turnGunRight(360);
-		}
-	}
-	
 
-	/**
-	 * onScannedRobot: What to do when you see another robot
-	 */
+		findBattleFieldCenter();
+		spinOnBattleFieldCenter();
+	}
+
+	@Override
 	public void onScannedRobot(ScannedRobotEvent e) {
 		// Replace the next line with any behavior you would like
-		//double angle = e.getBearing(); // retorna o angulo do robo adversario
-		//double distance = e.getDistance(); //retorna a distancia do robo adversario
-		double energyOpponent = e.getEnergy(); // retorna a energia do robo adversario
-		double myEnergy = getEnergy();
-		int opponents = getOthers();
-		
-		if(myEnergy > energyOpponent && myEnergy > 70){
+		double distance = e.getDistance(); // retorna a distancia do robo adversario
+		double velocityOpponent = e.getVelocity();
+		double delta = 4 * getWidth();
+
+		if (velocityOpponent == 0) {
 			fire(3);
-		}else{
-			fire(1);
+		} else {
+			if (distance < delta) {
+				fire(2);
+			} else {
+				fire(1);
+			}
 		}
-		scan();	//procura por outros robos logo apos atirar
+	}
+
+	@Override
+	public void onHitByBullet(HitByBulletEvent e) {
+		// Replace the next line with any behavior you would like
+		setMaxVelocity(8);
+		fire(1);
+		verifyDanger();
+		escape();
+	}
+
+	@Override
+	public void onHitWall(HitWallEvent e) {
+		// Replace the next line with any behavior you would like
+		findBattleFieldCenter();
+	}
+
+	@Override
+	public void onHitRobot(HitRobotEvent e) {
+		back(4 * getWidth());
+		fire(2);
 	}
 
 	/**
-	 * onHitByBullet: What to do when you're hit by a bullet
+	 * findBattleFieldCenter: Find relative battlefield center based on robot
+	 * coordinates.
 	 */
-	public void onHitByBullet(HitByBulletEvent e) {
-		// Replace the next line with any behavior you would like
-		turnRight(45);
-		back(10);
-		//scan();
+	public void findBattleFieldCenter() {
+		double xcenter = getBattleFieldWidth() / 2.0;
+		double ycenter = getBattleFieldHeight() / 2.0;
+		double x = getX();
+		double y = getY();
+		double positionBody = getHeading();
+		double angle;
+		double xDist, yDist;
+
+		// Detect nearest X axis coordinate and move to it based on
+		// current robot positions properly.
+
+		if (x > xcenter) {
+			if (positionBody >= 0 && positionBody <= 90) {
+				angle = 90 + positionBody;
+				turnLeft(angle);
+			} else if (positionBody > 90 && positionBody < 270) {
+				angle = 270 - positionBody;
+				turnRight(angle);
+			} else {
+				angle = positionBody - 270;
+				turnLeft(angle);
+			}
+
+			xDist = x - xcenter;
+			ahead(xDist);
+
+		} else {
+			if (positionBody >= 0 && positionBody <= 90) {
+				angle = 90 - positionBody;
+				turnRight(angle);
+			} else if (positionBody > 90 && positionBody < 270) {
+				angle = positionBody - 90;
+				turnLeft(angle);
+			} else {
+				angle = 450 - positionBody;
+				turnRight(angle);
+			}
+
+			xDist = xcenter - x;
+			ahead(xDist);
+		}
+
+		// update current position body heading angle
+		positionBody = getHeading();
+
+		// Detect nearest Y axis coordinate and move to it based on
+		// current robot positions properly.
+
+		if (y > ycenter) {
+			if (positionBody == 90) {
+				turnRight(90);
+			} else {
+				turnLeft(90);
+			}
+
+			yDist = y - ycenter;
+			ahead(yDist);
+		} else {
+			if (positionBody == 90) {
+				turnLeft(90);
+			} else {
+				turnRight(90);
+			}
+
+			yDist = ycenter - y;
+			ahead(yDist);
+		}
+
 	}
-	
+
 	/**
-	 * onHitWall: What to do when you hit a wall
+	 * spinOnBattleFieldCenter: Use battlefield center coordinate to spin around it.
 	 */
-	public void onHitWall(HitWallEvent e) {
-		// Replace the next line with any behavior you would like
-		//turnRight(45);
-		back(20);
-		double positionBody = getHeading();
-		double positionWall = e.getBearing();
-		if(positionBody == 0 || positionBody == 90 || positionBody == 180 || positionBody == 270){
-			turnGunRight(90);
-			fire(3);
-		}else{
-			turnGunRight(positionWall+90);
-			fire(3);
-		}
-	}	
-	
-	//quando o robo bate com outro robo
-	public void onHitRobot(HitRobotEvent e){
-		back(10);
-		double positionBody = getHeading();
-		double positionOpposite = e.getBearing();
-		if(positionBody == 0 || positionBody == 90 || positionBody == 180 || positionBody == 270){
-			turnGunRight(positionOpposite - 90);
-			fire(3);
-		}else{
-			turnGunRight(positionOpposite);
-			fire(3);
+	private void spinOnBattleFieldCenter() {
+		// Do a circular loop and verify danger to proceed.
+		while (true) {
+			setTurnRight(10000);
+			setMaxVelocity(5);
+			ahead(10000);
+
+			// Verify danger level to avoid wall collisions.
+			verifyDanger();
 		}
 	}
+
+	/**
+	 * escape: Execute escape behavior.
+	 */
+	private void escape() {
+		double positionBody = getHeading();
+		double delta = 4 * getWidth();
+
+		// Check current robot heading angle and properly adjust
+		// new heading angle offset.
+
+		if (positionBody >= 0 && positionBody <= 90) {
+			turnLeft(positionBody);
+		} else if (positionBody > 90 && positionBody <= 180) {
+			turnRight(180 - positionBody);
+		} else if (positionBody > 180 && positionBody <= 270) {
+			turnRight(270 - positionBody);
+		} else {
+			turnRight(360 - positionBody);
+		}
+
+		ahead(delta);
+	}
+
+	/**
+	 * verifyDanger: Avoid walls to prevent collisions.
+	 */
+	private void verifyDanger() {
+		double xMax = getBattleFieldWidth() / 2;
+		double yMax = getBattleFieldHeight() / 2;
+		double x = getX();
+		double y = getY();
+		double positionBody = getHeading();
+		double safeDistance = 2 * getWidth();
+		double distanceX;
+		double distanceY = yMax - y;
+
+		// Obtain current robot position coordinates and calculates if
+		// distance between wall is acceptable. Otherwise, assumes
+		// another direction to avoid collisions to the nearest walls.
+
+		if (x > xMax) {
+			distanceX = xMax * 2 - x;
+
+			if (y > yMax) {
+				distanceY = yMax * 2 - y;
+
+				if (distanceX < safeDistance || distanceY < safeDistance) {
+					if (positionBody >= 0 && positionBody <= 90) {
+						turnRight(180);
+					} else if (positionBody > 90 && positionBody <= 180) {
+						turnRight(180 - positionBody);
+					} else if (positionBody > 180 && positionBody <= 270) {
+						// Do nothing, meanwhile :)
+					} else {
+						turnLeft(positionBody - 270);
+					}
+				}
+			} else {
+				distanceY = y;
+
+				if (distanceX < safeDistance || distanceY < safeDistance) {
+					if (positionBody >= 0 && positionBody <= 90) {
+						turnLeft(positionBody + 45);
+					} else if (positionBody > 90 && positionBody <= 180) {
+						turnRight(180);
+					} else if (positionBody > 180 && positionBody <= 270) {
+						turnRight(360 - positionBody);
+					} else {
+						// Do nothing, meanwhile :)
+					}
+				}
+			}
+
+			ahead(safeDistance);
+		} else {
+			distanceX = x;
+
+			if (y > yMax) {
+				distanceY = yMax * 2 - y;
+
+				if (distanceX < safeDistance || distanceY < safeDistance) {
+					if (positionBody >= 0 && positionBody <= 90) {
+						turnRight(90 - positionBody);
+					} else if (positionBody > 90 && positionBody <= 180) {
+						// Do nothing, meanwhile :)
+					} else if (positionBody > 180 && positionBody <= 270) {
+						turnLeft(positionBody - 180);
+					} else {
+						turnRight(180);
+					}
+				}
+			} else {
+				distanceY = y;
+
+				if (distanceX < safeDistance || distanceY < safeDistance) {
+					if (positionBody >= 0 && positionBody <= 90) {
+						// Do nothing, meanwhile :)
+					} else if (positionBody > 90 && positionBody <= 180) {
+						turnLeft(positionBody - 90);
+					} else if (positionBody > 180 && positionBody <= 270) {
+						turnRight(180);
+					} else {
+						turnRight(360 - positionBody);
+					}
+				}
+			}
+
+			ahead(safeDistance);
+		}
+	}
+
 }
